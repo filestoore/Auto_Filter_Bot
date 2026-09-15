@@ -12,7 +12,7 @@ from Script import script
 from datetime import datetime, timedelta
 from database.refer import referdb
 from database.config_db import mdb
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
+from pyrogram.types import LinkPreviewOptions, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
 from pyrogram import Client, filters, enums, StopPropagation
 from pyrogram.errors import FloodWait, UserNotParticipant , ChannelInvalid, PeerIdInvalid
 from database.ia_filterdb import Media, Media2, get_file_details, unpack_new_file_id, get_bad_files, save_file
@@ -95,7 +95,7 @@ async def start(client, message):
                         InlineKeyboardButton('🍁 Update Channel 🍁', url=UPDATE_CHNL_LNK)
                       ]]
             reply_markup = InlineKeyboardMarkup(buttons)
-            await message.reply(script.GSTART_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup, disable_web_page_preview=True)
+            await message.reply(script.GSTART_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup, link_preview_options=LinkPreviewOptions(is_disabled=True))
 
             await asyncio.sleep(2) 
             if not await db.get_chat(message.chat.id):
@@ -210,7 +210,7 @@ async def start(client, message):
                     await client.send_message(
                         chat_id=user_id,
                         text=f"<b>Hᴇʏ {uss.mention}\n\nYᴏᴜ ɢᴏᴛ 1 ᴍᴏɴᴛʜ ᴘʀᴇᴍɪᴜᴍ sᴜʙsᴄʀɪᴘᴛɪᴏɴ ʙʏ ɪɴᴠɪᴛɪɴɢ 10 ᴜsᴇʀs ❗</b>",
-                        disable_web_page_preview=True              
+                        link_preview_options=LinkPreviewOptions(is_disabled=True)              
                     )
                 for admin in ADMINS:
                     await client.send_message(chat_id=admin, text=f"Sᴜᴄᴄᴇss ғᴜʟʟʏ ᴛᴀsᴋ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ʙʏ ᴛʜɪs ᴜsᴇʀ:\n\nuser Nᴀᴍᴇ: {uss.mention}\n\nUsᴇʀ ɪᴅ: {uss.id}!")	
@@ -388,11 +388,7 @@ async def start(client, message):
 
         settings = await get_settings(int(grp_id))
         if not files_:
-            raw = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
-            sep = raw.find(b"_")
-            if sep == -1:
-                raise ValueError("Invalid encoded data")
-            file_id = raw[sep + 1:].decode("latin1")
+            file_id = decoded_file_id
             try:
                 cover = None
                 if COVERX:
@@ -419,7 +415,7 @@ async def start(client, message):
                     except Exception:
                         return
                 await msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(btn))
-                k = await msg.reply(script.DEL_MSG.format(get_time(DELETE_TIME)), quote=True, parse_mode=enums.ParseMode.HTML)
+                k = await msg.reply(script.DEL_MSG.format(get_time(DELETE_TIME)), parse_mode=enums.ParseMode.HTML)
                 await asyncio.sleep(DELETE_TIME)
                 await msg.delete()
                 await k.edit_text("<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!</b>")
@@ -455,7 +451,7 @@ async def start(client, message):
             reply_markup=InlineKeyboardMarkup(btn)
         )
         
-        k = await msg.reply(script.DEL_MSG.format(get_time(DELETE_TIME)), quote=True, parse_mode=enums.ParseMode.HTML)
+        k = await msg.reply(script.DEL_MSG.format(get_time(DELETE_TIME)), parse_mode=enums.ParseMode.HTML)
         await asyncio.sleep(DELETE_TIME)
         await msg.delete()
         await k.edit_text("<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!</b>")
@@ -502,9 +498,9 @@ async def save_file_handler(bot, message):
     """Save file to database"""
     reply = message.reply_to_message
     if reply and reply.media:
-        msg = await message.reply("Pʀᴏᴄᴇssɪɴɢ...⏳", quote=True)
+        msg = await message.reply("Pʀᴏᴄᴇssɪɴɢ...⏳")
     else:
-        await message.reply('Rᴇᴘʟʏ ᴛᴏ ғɪʟᴇ ᴡɪᴛʜ /save ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴀᴠᴇ', quote=True)
+        await message.reply('Rᴇᴘʟʏ ᴛᴏ ғɪʟᴇ ᴡɪᴛʜ /save ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴀᴠᴇ')
         return
 
     try:
@@ -538,9 +534,9 @@ async def delete(bot, message):
     """Delete file from database"""
     reply = message.reply_to_message
     if reply and reply.media:
-        msg = await message.reply("Pʀᴏᴄᴇssɪɴɢ...⏳", quote=True)
+        msg = await message.reply("Pʀᴏᴄᴇssɪɴɢ...⏳")
     else:
-        await message.reply('Rᴇᴘʟʏ ᴛᴏ ғɪʟᴇ ᴡɪᴛʜ /delete ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴇʟᴇᴛᴇ', quote=True)
+        await message.reply('Rᴇᴘʟʏ ᴛᴏ ғɪʟᴇ ᴡɪᴛʜ /delete ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴇʟᴇᴛᴇ')
         return
 
     for file_type in ("document", "video", "audio"):
@@ -617,7 +613,6 @@ async def delete_all_index(bot, message):
                 ],
             ]
         ),
-        quote=True,
     )
 
 @Client.on_message(filters.command('settings'))
@@ -639,9 +634,8 @@ async def settings(client, message):
         await message.reply_text(
                 text="<b>ᴡʜᴇʀᴇ ᴅᴏ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴏᴘᴇɴ ꜱᴇᴛᴛɪɴɢꜱ ᴍᴇɴᴜ ? ⚙️</b>",
                 reply_markup=InlineKeyboardMarkup(btn),
-                disable_web_page_preview=True,
-                parse_mode=enums.ParseMode.HTML,
-                reply_to_message_id=message.id
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
+                parse_mode=enums.ParseMode.HTML
         )
     elif chat_type == enums.ChatType.PRIVATE:
         connected_groups = await db.get_connected_grps(user_id)
@@ -1027,7 +1021,7 @@ async def save_caption(client, message):
     except Exception:
         return await message.reply_text("<code>ɢɪᴠᴇ ᴍᴇ ᴀ ᴄᴀᴘᴛɪᴏɴ ᴀʟᴏɴɢ ᴡɪᴛʜ ɪᴛ.\n\nᴇxᴀᴍᴘʟᴇ -\n\nꜰᴏʀ ꜰɪʟᴇ ɴᴀᴍᴇ ꜱᴇɴᴅ <code>{file_name}</code>\nꜰᴏʀ ꜰɪʟᴇ ꜱɪᴢᴇ ꜱᴇɴᴅ <code>{file_size}</code>\n\n<code>/set_caption {file_name}</code></code>")
     await save_group_settings(grp_id, 'caption', caption)
-    await message.reply_text(f"ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴄʜᴀɴɢᴇᴅ ᴄᴀᴘᴛɪᴏɴ ꜰᴏʀ {title}\n\nᴄᴀᴘᴛɪᴏɴ - {caption}", disable_web_page_preview=True)
+    await message.reply_text(f"ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴄʜᴀɴɢᴇᴅ ᴄᴀᴘᴛɪᴏɴ ꜰᴏʀ {title}\n\nᴄᴀᴘᴛɪᴏɴ - {caption}", link_preview_options=LinkPreviewOptions(is_disabled=True))
     await client.send_message(LOG_CHANNEL, f"#Set_Caption\n\nɢʀᴏᴜᴘ ɴᴀᴍᴇ : {title}\n\nɢʀᴏᴜᴘ ɪᴅ: {grp_id}\nɪɴᴠɪᴛᴇ ʟɪɴᴋ : {invite_link}\n\nᴜᴘᴅᴀᴛᴇᴅ ʙʏ : {message.from_user.username}")
 
 
@@ -1060,7 +1054,7 @@ async def set_tutorial(client, message: Message):
     await message.reply_text(
         f"<b>ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴄʜᴀɴɢᴇᴅ {tutorial_key.replace('_', ' ').title()} ꜰᴏʀ {title}</b>\n\n"
         f"ʟɪɴᴋ - {tutorial_link}",
-        disable_web_page_preview=True
+        link_preview_options=LinkPreviewOptions(is_disabled=True)
     )
     await client.send_message(
         LOG_CHANNEL,
@@ -1102,7 +1096,7 @@ async def handle_shortner_command(c, m, shortner_key, api_key, log_prefix, fallb
             f"\n\nꜱɪᴛᴇ - {URL}\n\nᴀᴘɪ - `{API}`"
             f"\n\nɢʀᴏᴜᴘ - {grp_link}\nɢʀᴏᴜᴘ ɪᴅ - `{grp_id}`"
         )
-        await c.send_message(LOG_CHANNEL, log_message, disable_web_page_preview=True)
+        await c.send_message(LOG_CHANNEL, log_message, link_preview_options=LinkPreviewOptions(is_disabled=True))
     except Exception as e:
         await save_group_settings(grp_id, shortner_key, fallback_url)
         await save_group_settings(grp_id, api_key, fallback_api)
@@ -1155,13 +1149,13 @@ async def set_log(client, message):
     except Exception as e:
         return await message.reply_text(f'<b><u>😐 ᴍᴀᴋᴇ sᴜʀᴇ ᴛʜɪs ʙᴏᴛ ᴀᴅᴍɪɴ ɪɴ ᴛʜᴀᴛ ᴄʜᴀɴɴᴇʟ...</u>\n\n💔 ᴇʀʀᴏʀ - <code>{e}</code></b>')
     await save_group_settings(grp_id, 'log', log)
-    await message.reply_text(f"<b>✅ sᴜᴄᴄᴇssꜰᴜʟʟʏ sᴇᴛ ʏᴏᴜʀ ʟᴏɢ ᴄʜᴀɴɴᴇʟ ꜰᴏʀ {title}\n\nɪᴅ - `{log}`</b>", disable_web_page_preview=True)
+    await message.reply_text(f"<b>✅ sᴜᴄᴄᴇssꜰᴜʟʟʏ sᴇᴛ ʏᴏᴜʀ ʟᴏɢ ᴄʜᴀɴɴᴇʟ ꜰᴏʀ {title}\n\nɪᴅ - `{log}`</b>", link_preview_options=LinkPreviewOptions(is_disabled=True))
     user_id = message.from_user.id
     user_info = f"@{message.from_user.username}" if message.from_user.username else f"{message.from_user.mention}"
     link = (await client.get_chat(message.chat.id)).invite_link
     grp_link = f"[{message.chat.title}]({link})"
     log_message = f"#New_Log_Channel_Set\n\nɴᴀᴍᴇ - {user_info}\n\nɪᴅ - `{user_id}`\n\nʟᴏɢ ᴄʜᴀɴɴᴇʟ ɪᴅ - `{log}`\nɢʀᴏᴜᴘ ʟɪɴᴋ - `{grp_link}`\n\nɢʀᴏᴜᴘ ɪᴅ : `{grp_id}`"
-    await client.send_message(LOG_CHANNEL, log_message, disable_web_page_preview=True) 
+    await client.send_message(LOG_CHANNEL, log_message, link_preview_options=LinkPreviewOptions(is_disabled=True)) 
 
 
 @Client.on_message(filters.command('set_time'))
@@ -1217,7 +1211,7 @@ async def all_settings(client, message):
         [InlineKeyboardButton("♻️ ʀᴇꜱᴇᴛ ꜱᴇᴛᴛɪɴɢꜱ", callback_data=f"reset_group_{grp_id}")],
         [InlineKeyboardButton("🚫 ᴄʟᴏꜱᴇ", callback_data="close_data", style=enums.ButtonStyle.DANGER)]
     ]
-    dlt = await message.reply_text(text, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
+    dlt = await message.reply_text(text, reply_markup=InlineKeyboardMarkup(btn), link_preview_options=LinkPreviewOptions(is_disabled=True))
     await asyncio.sleep(300)
     await dlt.delete()
 
@@ -1261,7 +1255,7 @@ async def reset_group_callback(client, callback_query):
         [InlineKeyboardButton("♻️ ʀᴇꜱᴇᴛ ꜱᴇᴛᴛɪɴɢꜱ", callback_data=f"reset_group_{grp_id}")],
         [InlineKeyboardButton("🚫 ᴄʟᴏꜱᴇ", callback_data="close_data", style=enums.ButtonStyle.DANGER)]
     ]
-    await callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=True)
+    await callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(buttons), link_preview_options=LinkPreviewOptions(is_disabled=True))
 
 @Client.on_message(filters.command("verify") & filters.user(ADMINS))
 async def verify(bot, message):
@@ -1341,14 +1335,12 @@ async def reset_all_settings(client, message):
     try:
         reset_count = await db.dreamx_reset_settings()
         await message.reply_text(
-            f"<b>ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ꜱᴇᴛᴛɪɴɢꜱ ꜰᴏʀ  <code>{reset_count}</code> ɢʀᴏᴜᴘꜱ. ᴅᴇꜰᴀᴜʟᴛ ᴠᴀʟᴜᴇꜱ ᴡɪʟʟ ʙᴇ ᴜꜱᴇᴅ ✅</b>",
-            quote=True
+            f"<b>ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ꜱᴇᴛᴛɪɴɢꜱ ꜰᴏʀ  <code>{reset_count}</code> ɢʀᴏᴜᴘꜱ. ᴅᴇꜰᴀᴜʟᴛ ᴠᴀʟᴜᴇꜱ ᴡɪʟʟ ʙᴇ ᴜꜱᴇᴅ ✅</b>"
         )
     except Exception as e:
         logger.error("reset_all_settings: %s", e)
         await message.reply_text(
-            "<b>🚫 An error occurred while resetting group settings.\nPlease try again later.</b>",
-            quote=True
+            "<b>🚫 An error occurred while resetting group settings.\nPlease try again later.</b>"
         )
 
 @Client.on_message(filters.command("trial_reset"))
@@ -1434,7 +1426,7 @@ async def remove_fsub(client, message):
 
 @Client.on_message(filters.command('clean_groups') & filters.user(ADMINS))
 async def clean_groups_handler(client, message):
-    msg = await message.reply('Cleaning groups... This may take a while.', quote=True)
+    msg = await message.reply('Cleaning groups... This may take a while.')
     deleted_count = 0
     total_groups = await db.total_chat_count()
     processed = 0
